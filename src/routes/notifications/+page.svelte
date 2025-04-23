@@ -5,7 +5,6 @@
 	import type { Notification } from '$lib/types/notification';
 	import Trash from '$lib/components/Trash.svelte';
 
-	// Состояние
 	let notifications: Notification[] = [];
 	let isLoading = true;
 	let error: string | null = null;
@@ -13,17 +12,14 @@
 	let deletingId: number | null = null;
 	let deleteError: string | null = null;
 
-	// Пагинация
 	let currentPage = 1;
 	let itemsPerPage = 10;
 	let totalItems = 0;
 
-	// Сортировка
 	type SortField = Exclude<keyof Notification, 'formattedDate'>;
 	let sortField: SortField = 'dispatchDateTime';
 	let sortDirection: 'asc' | 'desc' = 'desc';
 
-	// Вычисляемые значения
 	$: totalPages = Math.ceil(totalItems / itemsPerPage);
 	$: startItem = (currentPage - 1) * itemsPerPage + 1;
 	$: endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -32,10 +28,8 @@
 		currentPage * itemsPerPage
 	);
 
-	// Обработчик сортировки
 	const handleSort = async (field: SortField) => {
 		if (isPending) return;
-
 		try {
 			isPending = true;
 			sortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
@@ -51,7 +45,6 @@
 		}
 	};
 
-	// Загрузка данных
 	onMount(async () => {
 		try {
 			notifications = await getNotifications();
@@ -74,11 +67,9 @@
 
 				await deleteNotification(id);
 
-				// Обновляем список после удаления
 				notifications = await getNotifications(sortField, sortDirection);
 				totalItems = notifications.length;
 
-				// Сброс пагинации если нужно
 				if (paginatedNotifications.length === 0 && currentPage > 1) {
 					currentPage--;
 				}
@@ -110,7 +101,6 @@
 			</div>
 		{/if}
 
-		<!-- Панель управления -->
 		<div class="mb-4 flex items-center justify-between">
 			<div class="flex items-center gap-4">
 				<span class="text-sm text-gray-600">Строк на странице:</span>
@@ -124,13 +114,8 @@
 					<option value={100}>100</option>
 				</select>
 			</div>
-
-			<div class="text-sm text-gray-600">
-				Показано {startItem}-{endItem} из {totalItems}
-			</div>
 		</div>
 
-		<!-- Таблица -->
 		<div class="flex-1 overflow-auto rounded-lg border shadow-sm">
 			<table class="h-full w-full table-fixed">
 				<thead class="sticky top-0 bg-gray-50">
@@ -251,7 +236,7 @@
 								{notification.userName ?? 'Системное'}
 							</td>
 							<td class="truncate px-6 py-4 text-sm text-gray-500">
-								{notification.formattedDate}
+								{notification.dispatchDateTime.toLocaleString()}
 							</td>
 							<td class="px-6 py-4 text-sm text-gray-900">
 								<p class="line-clamp-2 transition-all hover:line-clamp-none">
@@ -300,7 +285,6 @@
 			</table>
 		</div>
 
-		<!-- Пагинация -->
 		<div class="flex items-center justify-between border-t bg-gray-50 px-4 py-3">
 			<button
 				class="rounded-md border bg-white px-4 py-2 hover:bg-gray-50 disabled:opacity-50"
@@ -312,6 +296,10 @@
 
 			<div class="text-sm text-gray-600">
 				Страница {currentPage} из {totalPages}
+			</div>
+
+			<div class="text-sm text-gray-600">
+				Показано {startItem}-{endItem} из {totalItems}
 			</div>
 
 			<button

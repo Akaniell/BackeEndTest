@@ -1,15 +1,13 @@
 export interface Notification {
   id: number;
   userName: string | null;
-  dispatchDateTime: string;
-  formattedDate: string;  // Добавляем вычисляемое поле
+  dispatchDateTime: Date;
   notificationTypeName: string;
   patternName: string;
   patternDefaultText: string;
   additionalText: string | null;
 }
 
-// Дополнительный тип для точного соответствия DTO
 export interface Notification_DataDTO {
   id: number;
   userName: string | null;

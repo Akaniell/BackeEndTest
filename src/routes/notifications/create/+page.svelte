@@ -8,7 +8,6 @@
     let patterns: PatternDTO[] = [];
     let users: UserDTO[] = [];
   
-    // теперь хранится UserId выбранного пользователя
     let selectedUserName: string = '';
     let selectedNotificationType: string = '';
     let selectedPattern: string = '';

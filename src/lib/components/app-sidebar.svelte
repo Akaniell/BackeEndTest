@@ -10,9 +10,14 @@
 					{
 						title: 'Главная',
 						url: '/'
-					},					{
+					},					
+					{
 						title: 'Уведомления',
 						url: '/notifications'
+					},
+					{
+						title: 'Создание уведомления',
+						url: '/notifications/create'
 					},
 				]
 			},

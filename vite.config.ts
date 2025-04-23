@@ -9,6 +9,21 @@ export default defineConfig({
 			target: 'https://localhost:7233',
 			changeOrigin: true,
 			secure: false,
+		  },
+		  '/users': {
+			target: 'https://localhost:7233',
+			changeOrigin: true,
+			secure: false,
+		  },
+		  '/notification_types': {
+			target: 'https://localhost:7233',
+			changeOrigin: true,
+			secure: false,
+		  },
+		  '/patterns': {
+			target: 'https://localhost:7233',
+			changeOrigin: true,
+			secure: false,
 		  }
 		}
 	  }

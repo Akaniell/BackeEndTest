@@ -1,17 +1,29 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getNotifications } from '$lib/services/notificationService';
+	import { deleteNotification, getNotifications } from '$lib/services/notificationService';
+	import SortArrow from '$lib/components/SortArrow.svelte';
 	import type { Notification } from '$lib/types/notification';
+	import Trash from '$lib/components/Trash.svelte';
 
+	// Состояние
 	let notifications: Notification[] = [];
 	let isLoading = true;
 	let error: string | null = null;
+	let isPending = false;
+	let deletingId: number | null = null;
+	let deleteError: string | null = null;
 
 	// Пагинация
 	let currentPage = 1;
 	let itemsPerPage = 10;
 	let totalItems = 0;
 
+	// Сортировка
+	type SortField = Exclude<keyof Notification, 'formattedDate'>;
+	let sortField: SortField = 'dispatchDateTime';
+	let sortDirection: 'asc' | 'desc' = 'desc';
+
+	// Вычисляемые значения
 	$: totalPages = Math.ceil(totalItems / itemsPerPage);
 	$: startItem = (currentPage - 1) * itemsPerPage + 1;
 	$: endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -20,11 +32,30 @@
 		currentPage * itemsPerPage
 	);
 
+	// Обработчик сортировки
+	const handleSort = async (field: SortField) => {
+		if (isPending) return;
+
+		try {
+			isPending = true;
+			sortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+			sortField = field;
+			currentPage = 1;
+
+			notifications = await getNotifications(field, sortDirection);
+			totalItems = notifications.length;
+		} catch (err) {
+			error = (err as Error).message;
+		} finally {
+			isPending = false;
+		}
+	};
+
+	// Загрузка данных
 	onMount(async () => {
 		try {
-			const data = await getNotifications();
-			notifications = data;
-			totalItems = data.length;
+			notifications = await getNotifications();
+			totalItems = notifications.length;
 		} catch (err) {
 			error = (err as Error).message;
 		} finally {
@@ -34,6 +65,30 @@
 
 	const handlePrevious = () => currentPage--;
 	const handleNext = () => currentPage++;
+
+	const handleDelete = async (id: number) => {
+		if (confirm('Вы уверены, что хотите удалить это уведомление?')) {
+			try {
+				deletingId = id;
+				deleteError = null;
+
+				await deleteNotification(id);
+
+				// Обновляем список после удаления
+				notifications = await getNotifications(sortField, sortDirection);
+				totalItems = notifications.length;
+
+				// Сброс пагинации если нужно
+				if (paginatedNotifications.length === 0 && currentPage > 1) {
+					currentPage--;
+				}
+			} catch (err) {
+				deleteError = (err as Error).message;
+			} finally {
+				deletingId = null;
+			}
+		}
+	};
 </script>
 
 <h1 class="mb-6 text-2xl font-bold">История уведомлений</h1>
@@ -48,7 +103,13 @@
 		Ошибка загрузки: {error}
 	</div>
 {:else}
-	<div class="flex h-[calc(100vh-160px)] flex-col">
+	<div class="relative flex h-[calc(100vh-160px)] flex-col">
+		{#if isPending}
+			<div class="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
+				<div class="h-8 w-8 animate-spin rounded-full border-t-2 border-blue-500"></div>
+			</div>
+		{/if}
+
 		<!-- Панель управления -->
 		<div class="mb-4 flex items-center justify-between">
 			<div class="flex items-center gap-4">
@@ -63,42 +124,117 @@
 					<option value={100}>100</option>
 				</select>
 			</div>
+
+			<div class="text-sm text-gray-600">
+				Показано {startItem}-{endItem} из {totalItems}
+			</div>
 		</div>
+
 		<!-- Таблица -->
 		<div class="flex-1 overflow-auto rounded-lg border shadow-sm">
 			<table class="h-full w-full table-fixed">
 				<thead class="sticky top-0 bg-gray-50">
 					<tr>
 						<th
-							class="w-1/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Тип</th
+							class="w-[100px] cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('id')}
 						>
+							<div class="flex items-center gap-1">
+								ID
+								{#if sortField === 'id'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
 						<th
-							class="w-1/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Шаблон</th
+							class="w-1/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('notificationTypeName')}
 						>
+							<div class="flex items-center gap-1">
+								Тип
+								{#if sortField === 'notificationTypeName'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
 						<th
-							class="w-1/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Пользователь</th
+							class="w-1/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('patternName')}
 						>
+							<div class="flex items-center gap-1">
+								Шаблон
+								{#if sortField === 'patternName'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
 						<th
-							class="w-1/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Дата</th
+							class="w-1/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('userName')}
 						>
+							<div class="flex items-center gap-1">
+								Пользователь
+								{#if sortField === 'userName'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
 						<th
-							class="w-2/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Текст</th
+							class="w-1/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('dispatchDateTime')}
 						>
+							<div class="flex items-center gap-1">
+								Дата
+								{#if sortField === 'dispatchDateTime'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
 						<th
-							class="w-1/6 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-							>Дополнительно</th
+							class="w-2/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('patternDefaultText')}
 						>
+							<div class="flex items-center gap-1">
+								Текст
+								{#if sortField === 'patternDefaultText'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+
+						<th
+							class="w-1/6 cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100"
+							on:click={() => handleSort('additionalText')}
+						>
+							<div class="flex items-center gap-1">
+								Дополнительно
+								{#if sortField === 'additionalText'}
+									<SortArrow direction={sortDirection} />
+								{/if}
+							</div>
+						</th>
+						<th
+							class="w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+						>
+							Действия
+						</th>
 					</tr>
 				</thead>
 
 				<tbody class="divide-y divide-gray-200 bg-white">
 					{#each paginatedNotifications as notification}
 						<tr class="transition-colors hover:bg-gray-50">
+							<td
+								class="truncate px-6 py-4 text-sm text-gray-900"
+								title={notification.id.toString()}
+							>
+								{notification.id}
+							</td>
 							<td
 								class="truncate px-6 py-4 text-sm text-gray-900"
 								title={notification.notificationTypeName}
@@ -135,10 +271,27 @@
 									<span class="text-gray-400">—</span>
 								{/if}
 							</td>
+							<td class="px-6 py-4 text-sm">
+								<button
+									class="relative rounded p-2 text-red-600 transition-colors hover:bg-red-50"
+									on:click={() => handleDelete(notification.id)}
+									disabled={deletingId === notification.id}
+								>
+									{#if deletingId === notification.id}
+										<div class="absolute inset-0 flex items-center justify-center bg-white/50">
+											<div
+												class="h-4 w-4 animate-spin rounded-full border-t-2 border-red-600"
+											></div>
+										</div>
+									{/if}
+
+									<Trash></Trash>
+								</button>
+							</td>
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="6" class="px-6 py-8 text-center text-gray-500">
+							<td colspan="7" class="px-6 py-8 text-center text-gray-500">
 								Нет доступных уведомлений
 							</td>
 						</tr>
@@ -156,10 +309,6 @@
 			>
 				Назад
 			</button>
-
-			<div class="text-sm text-gray-600">
-				Показано {startItem}-{endItem} из {totalItems}
-			</div>
 
 			<div class="text-sm text-gray-600">
 				Страница {currentPage} из {totalPages}

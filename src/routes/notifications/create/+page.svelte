@@ -57,7 +57,7 @@
 	<h1 class="mb-6 text-2xl font-bold">Создание уведомления</h1>
 
 	{#if loading}
-		<p>Loading...</p>
+		<p>Загрузка...</p>
 	{:else if error}
 		<div class="rounded bg-red-100 p-4 text-red-700">
 			{error}
@@ -65,7 +65,7 @@
 	{:else}
 		<form class="rounded-lg border bg-white p-6 shadow-sm" on:submit|preventDefault={handleSubmit}>
 			<div class="mb-4">
-				<label class="mb-2 block font-medium text-gray-700" for="user">User:</label>
+				<label class="mb-2 block font-medium text-gray-700" for="user">Пользователь:</label>
 				<select
 					class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 					id="user"
@@ -80,7 +80,7 @@
 
 			<div class="mb-4">
 				<label class="mb-2 block font-medium text-gray-700" for="notificationType"
-					>Notification Type:</label
+					>Тип уведомления:</label
 				>
 				<select
 					class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -95,7 +95,7 @@
 			</div>
 
 			<div class="mb-4">
-				<label class="mb-2 block font-medium text-gray-700" for="pattern">Pattern:</label>
+				<label class="mb-2 block font-medium text-gray-700" for="pattern">Шаблон:</label>
 				<select
 					class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 					id="pattern"
@@ -110,7 +110,7 @@
 
 			<div class="mb-4">
 				<label class="mb-2 block font-medium text-gray-700" for="additionalText"
-					>Additional Text:</label
+					>Дополнительный текст:</label
 				>
 				<textarea
 					class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -121,7 +121,7 @@
 			</div>
 
 			<button class="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-700" type="submit">
-				Create Notification
+				Создать уведомление
 			</button>
 		</form>
 	{/if}

@@ -46,7 +46,7 @@ export const deleteNotification = async (id: number): Promise<void> => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`Ошибка! Статус: ${response.status}`);
     }
   } catch (error) {
     throw new Error(`Не удалось удалить уведомление. ${error}`);

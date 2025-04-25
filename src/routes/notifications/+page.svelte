@@ -4,6 +4,7 @@
 	import SortArrow from '$lib/components/SortArrow.svelte';
 	import type { Notification } from '$lib/types/notification';
 	import Trash from '$lib/components/Trash.svelte';
+	import CreateLink from '$lib/components/CreateLink.svelte';
 
 	let notifications: Notification[] = [];
 	let isLoading = true;
@@ -114,6 +115,7 @@
 					<option value={100}>100</option>
 				</select>
 			</div>
+			<CreateLink></CreateLink>
 		</div>
 
 		<div class="flex-1 overflow-auto rounded-lg border shadow-sm">
